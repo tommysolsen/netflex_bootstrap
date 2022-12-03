@@ -1,27 +1,16 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter_bootstrap/flutter_bootstrap.dart';
 import 'package:http/http.dart';
 import 'delegate.dart';
 
-
+/// The TranslatableException is an Exception that an exception type that can
+/// be translated by the [I18nDelegate] into a translated error message for the
+/// user. It has access to the i18n delegate in order to generate the translated
+/// message.
 abstract class TranslatableException implements Exception {
-  factory TranslatableException.message(Response response) {
-    try {
-      var data = jsonDecode(response.body);
-
-      if (response.statusCode == 422) {
-        return UnprocessableEntryException(
-            data['message'], data['errors'] ?? []);
-      }
-
-      return UnexpectedException();
-    } on Exception {
-      return UnexpectedException();
-    } on Error {
-      return UnexpectedException();
-    }
-  }
-
+  /// THe get message function will be run by a [I18nDelegate] in order to
   String getMessage(I18nDelegate i18n);
 }
 
@@ -30,25 +19,6 @@ class EntryField {
   final String reason;
 
   EntryField(this.field, this.reason);
-}
-
-List<EntryField> _parseFieldList(List<dynamic> data, String field) => data
-    .whereType<String>()
-    .map((e) => EntryField(field, e))
-    .toList(growable: false);
-
-List<EntryField> _parseFields(Map<String, dynamic> data) =>
-    data.entries.map((entry) => _parseFieldList(entry.value, entry.key)).fold(
-      <EntryField>[],
-          (List<EntryField> previousValue, element) =>
-      previousValue..addAll(element),
-    ).toList(growable: false);
-
-class UnprocessableEntryException extends ServerTranslatedException {
-  final List<EntryField> fields;
-
-  UnprocessableEntryException(super.message, Map<String, dynamic> data)
-      : fields = _parseFields(data);
 }
 
 class ServerTranslatedException implements TranslatableException {
@@ -74,9 +44,30 @@ abstract class LocallyTranslatedException implements TranslatableException {
   String getMessage(I18nDelegate i18n) => i18n.t(key, replacements);
 }
 
-class UnexpectedException implements TranslatableException {
+class UnexpectedError implements TranslatableException {
+  final Error? error;
+
+  UnexpectedError([this.error]);
+
   @override
   String getMessage(I18nDelegate i18n) {
+    if(error != null && kDebugMode) {
+      return error.toString();
+    }
+    return i18n.t("errors.unexpected");
+  }
+
+}
+class UnexpectedException implements TranslatableException {
+  final Exception? exception;
+
+  UnexpectedException([this.exception]);
+
+  @override
+  String getMessage(I18nDelegate i18n) {
+    if(exception != null && kDebugMode) {
+      return exception!.toString();
+    }
     return i18n.t("errors.unexpected");
   }
 }
@@ -102,13 +93,6 @@ class InvalidPagePayload implements TranslatableException {
   String getMessage(I18nDelegate i18n) {
     return i18n.t('errors.invalid_type',
         {'type': type.toString(), 'expected': type.toString()});
-  }
-}
-
-class UnauthenticatedException implements TranslatableException {
-  @override
-  String getMessage(I18nDelegate i18n) {
-    return i18n.t("errors.unauthenticated");
   }
 }
 

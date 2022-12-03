@@ -1,16 +1,18 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bootstrap/flutter_bootstrap.dart';
 import 'package:flutter_bootstrap/i18n/factory.dart';
 import 'package:flutter_bootstrap/i18n/mixins/boolean_mixin.dart';
 import 'package:flutter_bootstrap/i18n/mixins/default_dates.dart';
+import 'package:flutter_bootstrap/i18n/mixins/translatable_exceptions.dart';
 import 'package:flutter_bootstrap/i18n/mixins/translations.dart';
 import 'package:flutter_bootstrap/i18n/mixins/yaml_text.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:yaml/yaml.dart';
-
 
 /// A translation function takes a translation key and returns the translation
 /// of the key. This can be [I18nDelegate.t] for example.
@@ -94,6 +96,8 @@ abstract class I18nDelegate {
 
   String dayOfWeekFormat(DateTime time);
 
+  String translateException(Exception e);
+
   // Creates a new LocalizationDelegate
   static LocalizationsDelegate<I18nDelegate> makeDelegate(
           I18nDelegateFactory? factory) =>
@@ -103,7 +107,12 @@ abstract class I18nDelegate {
 }
 
 class BaseI18nDelegate extends I18nDelegate
-    with DefaultI18nDates, YamlTextEngine, TranslationsMixin, I18nBooleanMixin {
+    with
+        YamlTextEngine,
+        DefaultI18nDatesMixin,
+        TranslationsMixin,
+        I18nBooleanMixin,
+        TranslatableExceptionMixin {
   BaseI18nDelegate(super.locale) {
     initializeDates(locale);
   }
@@ -126,7 +135,6 @@ class BaseI18nDelegate extends I18nDelegate
     return true;
   }
 }
-
 
 class BaseI18DelegateFactory extends I18nDelegateFactory<BaseI18nDelegate> {
   @override

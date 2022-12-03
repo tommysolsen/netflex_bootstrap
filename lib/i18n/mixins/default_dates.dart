@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter_bootstrap/i18n/i18n.dart';
 import 'package:intl/intl.dart';
 
-abstract class DefaultI18nDates implements I18nDelegate {
+abstract class DefaultI18nDatesMixin implements I18nDelegate {
   /// Intl DateFormats
   late final DateFormat _longDate;
   late final DateFormat _shortDate;
