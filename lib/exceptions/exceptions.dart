@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter_bootstrap/i18n/i18n.dart';
+import 'package:netflex_bootstrap/i18n/i18n.dart';
 import 'package:http/http.dart';
 
 /// LaravelJSONException is a [TranslatableException] that instead of

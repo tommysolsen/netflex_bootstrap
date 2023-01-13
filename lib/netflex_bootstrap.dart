@@ -1,7 +1,7 @@
 /// Support for doing something awesome.
 ///
 /// More dartdocs go here.
-library flutter_bootstrap;
+library netflex_bootstrap;
 
 export 'repositories/repositories.dart';
 export 'http/http.dart';

@@ -1,4 +1,4 @@
-import 'package:flutter_bootstrap/http/http.dart';
+import 'package:netflex_bootstrap/http/http.dart';
 import 'package:http/http.dart';
 
 import 'package:package_info_plus/package_info_plus.dart';

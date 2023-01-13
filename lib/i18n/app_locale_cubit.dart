@@ -2,16 +2,17 @@ import 'dart:ui';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:netflex_bootstrap/app/app_options.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppLocaleCubit extends Cubit<AppLocaleState> {
-  final SharedPreferences sharedPreferences;
-
-  AppLocaleCubit(this.sharedPreferences, List<Locale> supportedLocales)
-      : super(AppLocaleState.determine(
-          sharedPreferences.getString('app-locale'),
-          supportedLocales,
-        ));
+  AppLocaleCubit(Locale? locale, List<Locale> supportedLocales)
+      : super(
+          AppLocaleState.determine(
+            locale,
+            supportedLocales,
+          ),
+        );
 }
 
 abstract class AppLocaleState extends Equatable {
@@ -37,10 +38,10 @@ abstract class AppLocaleState extends Equatable {
   /// then we pick the first available locale in the [supportedLocales] list
   /// as our locale
   factory AppLocaleState.determine(
-    String? locale,
+    Locale? locale,
     List<Locale> supportedLocales,
   ) =>
-      _maybeResolveLocale(Locale(locale ?? ""), supportedLocales) ??
+      _maybeResolveLocale(locale, supportedLocales) ??
       AutomaticLocale(supportedLocales);
 
   @override
@@ -76,8 +77,8 @@ abstract class AppLocaleState extends Equatable {
   }
 
   static ManuallySelectedLocale? _maybeResolveLocale(
-      Locale locale, Iterable<Locale> supportedLocales) {
-    if (locale.languageCode == "") return null;
+      Locale? locale, Iterable<Locale> supportedLocales) {
+    if (locale == null || locale.languageCode == "") return null;
     for (var supportedLocale in supportedLocales) {
       if (supportedLocale.languageCode == locale.languageCode &&
           supportedLocale.countryCode == locale.countryCode) {

@@ -4,6 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
 
 export 'file_storage_backend.dart';
+export 'file_storage_backend_with_static_asset.dart';
+export 'api_resource_cubit.dart';
+export 'api_resource_builder.dart';
+export 'action_resource.dart';
 
 /// The [BasicApiResourceRepository] implements a simple repository that can
 /// fetch data and store it for use later.

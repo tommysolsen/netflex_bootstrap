@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter_bootstrap/flutter_bootstrap.dart';
+import 'package:netflex_bootstrap/netflex_bootstrap.dart';
 import 'package:path_provider/path_provider.dart';
 
 enum StorageLocation {
@@ -59,4 +59,27 @@ class FileStorageBackend extends StorageBackend {
 
   Future<File> _getFile(String key) async =>
       File("${(await storageLocation.getDirectory()).path}/$key");
+}
+
+class InMemoryStorageBackend extends StorageBackend {
+
+  Map<String, String> _contents = {};
+
+  @override
+  Future<void> deleteData(String key) async {
+    _contents.remove(key);
+  }
+
+  @override
+  Future<String?> getData(String key) async {
+    if(_contents.containsKey(key)) {
+      return _contents[key];
+    }
+    return null;
+  }
+
+  @override
+  Future<void> saveData(String key, String contents) async {
+    _contents[key] = contents;
+  }
 }

@@ -2,7 +2,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter_bootstrap/flutter_bootstrap.dart';
+import 'package:netflex_bootstrap/netflex_bootstrap.dart';
 
 abstract class TranslatableExceptionMixin implements I18nDelegate {
   @override

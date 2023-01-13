@@ -1,12 +1,14 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_bootstrap/exceptions/exceptions.dart';
-import 'package:flutter_bootstrap/i18n/i18n.dart';
+import 'package:netflex_bootstrap/exceptions/exceptions.dart';
+import 'package:netflex_bootstrap/i18n/i18n.dart';
 
 /// The ExceptionProvider interface describes if a class contains an exception
 /// that we want to display to a user.
 abstract class ExceptionProvider {
+
+  /// Returns the exception provided.
   Exception get exception;
 }
 

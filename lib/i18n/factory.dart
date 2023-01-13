@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:flutter_bootstrap/i18n/delegate.dart';
+import 'package:netflex_bootstrap/i18n/delegate.dart';
 
 abstract class I18nDelegateFactory<T extends I18nDelegate> {
   T makeMember(Locale locale);

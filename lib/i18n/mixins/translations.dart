@@ -1,6 +1,6 @@
 
-import 'package:flutter_bootstrap/i18n/delegate.dart';
-import 'package:flutter_bootstrap/i18n/mixins/yaml_text.dart';
+import 'package:netflex_bootstrap/i18n/delegate.dart';
+import 'package:netflex_bootstrap/i18n/mixins/yaml_text.dart';
 
 import '../exceptions.dart';
 import '../factory.dart';

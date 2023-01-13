@@ -1,5 +1,5 @@
-import 'package:flutter_bootstrap/i18n/delegate.dart';
-import 'package:flutter_bootstrap/i18n/factory.dart';
+import 'package:netflex_bootstrap/i18n/delegate.dart';
+import 'package:netflex_bootstrap/i18n/factory.dart';
 
 abstract class I18nBooleanMixin implements TextEngine, I18nDelegate {
 

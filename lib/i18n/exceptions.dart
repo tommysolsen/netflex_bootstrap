@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_bootstrap/flutter_bootstrap.dart';
+import 'package:netflex_bootstrap/netflex_bootstrap.dart';
 import 'package:http/http.dart';
 import 'delegate.dart';
 

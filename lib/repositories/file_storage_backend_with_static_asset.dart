@@ -1,5 +1,5 @@
 import 'package:flutter/services.dart';
-import 'package:flutter_bootstrap/flutter_bootstrap.dart';
+import 'package:netflex_bootstrap/netflex_bootstrap.dart';
 
 Future<String?> Function (String) _getRootBundleContent(String filename) =>
         (key) => rootBundle.loadString(filename, cache: false);

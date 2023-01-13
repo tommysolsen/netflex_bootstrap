@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:flutter_bootstrap/i18n/i18n.dart';
+import 'package:netflex_bootstrap/i18n/i18n.dart';
 import 'package:intl/intl.dart';
 
 abstract class DefaultI18nDatesMixin implements I18nDelegate {
