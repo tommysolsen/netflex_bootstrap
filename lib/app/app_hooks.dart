@@ -85,12 +85,12 @@ extension LocaleDependentMiddlewareWrapper
 }
 
 abstract class AppClientDependentMiddleware extends AppMiddleware {
-  Widget postLocaleWithAppClientHandler(
+  Future<Widget> postLocaleWithAppClientHandler(
       Widget widget, Locale locale, AppHttpClient client);
 
-  static Widget wrap(Widget child, Locale locale, AppHttpClient client,
+  static Future<Widget> wrap(Widget child, Locale locale, AppHttpClient client,
       Iterable<AppMiddleware> middlewares) {
-    return middlewares.whereType<AppClientDependentMiddleware>().fold(
+    return middlewares.whereType<AppClientDependentMiddleware>().foldAsync(
           child,
           (cl, e) => e.postLocaleWithAppClientHandler(cl, locale, client),
         );
@@ -99,7 +99,8 @@ abstract class AppClientDependentMiddleware extends AppMiddleware {
 
 extension AppClientDependentMiddlewareWrapper
     on Iterable<AppClientDependentMiddleware> {
-  Widget wrap(Widget child, Locale locale, AppHttpClient client) => fold(
+  Future<Widget> wrap(Widget child, Locale locale, AppHttpClient client) =>
+      foldAsync(
         child,
         (cl, element) =>
             element.postLocaleWithAppClientHandler(cl, locale, client),
