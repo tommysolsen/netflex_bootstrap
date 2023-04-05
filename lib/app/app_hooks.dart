@@ -1,15 +1,25 @@
 import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
+import 'package:netflex_bootstrap/exceptions/async.dart';
 import 'package:netflex_bootstrap/netflex_bootstrap.dart';
 
+/// AppMiddlewares are run during the bootstrapping process in several steps.
+/// The steps are completed in order.
+///
+/// Order is:
+/// 1. [LocaleIndependentAppClientMiddleware]
+/// 2. [LocaleIndependentMiddleware]
+/// 3. [LocaleDependent
 abstract class AppMiddleware {}
 
 abstract class LocaleIndependentAppClientMiddleware extends AppMiddleware {
   AppHttpClient preLocAppHandler(AppHttpClient client);
 
   static AppHttpClient wrap(
-      AppHttpClient client, Iterable<AppMiddleware> middlewares) {
+    AppHttpClient client,
+    Iterable<AppMiddleware> middlewares,
+  ) {
     return middlewares
         .whereType<LocaleIndependentAppClientMiddleware>()
         .fold(client, (cl, element) => element.preLocAppHandler(cl));
@@ -41,36 +51,37 @@ extension LocaleDependentAppClientMiddlewareWrapper
 }
 
 abstract class LocaleIndependentMiddleware extends AppMiddleware {
-  Widget preLocaleHandler(Widget widget);
+  Future<Widget> preLocaleHandler(Widget widget);
 
-  static Widget wrap(Widget child, Iterable<AppMiddleware> middlewares) {
+  static Future<Widget> wrap(
+      Widget child, Iterable<AppMiddleware> middlewares) {
     return middlewares
         .whereType<LocaleIndependentMiddleware>()
-        .fold(child, (cl, e) => e.preLocaleHandler(cl));
+        .foldAsync(child, (cl, e) => e.preLocaleHandler(cl));
   }
 }
 
 extension LocaleIndependentMiddlewareWrapper
     on Iterable<LocaleIndependentMiddleware> {
-  Widget wrap(Widget client) =>
-      fold(client, (cl, element) => element.preLocaleHandler(cl));
+  Future<Widget> wrap(Widget child) =>
+      foldAsync(child, (cl, element) => element.preLocaleHandler(cl));
 }
 
 abstract class LocaleDependentMiddleware extends AppMiddleware {
-  Widget postLocaleHandler(Widget widget, Locale locale);
+  Future<Widget> postLocaleHandler(Widget widget, Locale locale);
 
-  static Widget wrap(
+  static Future<Widget> wrap(
       Widget child, Locale locale, Iterable<AppMiddleware> middlewares) {
     return middlewares
         .whereType<LocaleDependentMiddleware>()
-        .fold(child, (cl, e) => e.postLocaleHandler(cl, locale));
+        .foldAsync(child, (cl, e) => e.postLocaleHandler(cl, locale));
   }
 }
 
 extension LocaleDependentMiddlewareWrapper
     on Iterable<LocaleDependentMiddleware> {
-  Widget wrap(Widget client, Locale locale) =>
-      fold(client, (cl, element) => element.postLocaleHandler(cl, locale));
+  Future<Widget> wrap(Widget client, Locale locale) =>
+      foldAsync(client, (cl, element) => element.postLocaleHandler(cl, locale));
 }
 
 abstract class AppClientDependentMiddleware extends AppMiddleware {

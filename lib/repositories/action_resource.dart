@@ -63,10 +63,11 @@ class PerformingActionFailed<T> extends ActionResourceState<T>
 class ActionResourceOverlayBuilder<S extends StateStreamable<T>,
 T extends ActionResourceState<V>, V> extends StatelessWidget {
   final Widget Function(BuildContext) overlayBuilder;
+  final bool? force;
   final Widget child;
 
   const ActionResourceOverlayBuilder(
-      {super.key, required this.overlayBuilder, required this.child});
+      {super.key, required this.overlayBuilder, required this.child, this.force});
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +75,7 @@ T extends ActionResourceState<V>, V> extends StatelessWidget {
       buildWhen: (p, c) => p.runtimeType != c.runtimeType,
       builder: (context, state) =>
           ActionInProgressOverlay(
-              inAction: state is PerformingAction<V>,
+              inAction: force ?? state is PerformingAction<V>,
               overlayBuilder: overlayBuilder,
               child: child),
     );

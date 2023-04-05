@@ -3,15 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:netflex_bootstrap/app/app_hooks.dart';
 import 'package:netflex_bootstrap/app/app_module.dart';
 import 'package:netflex_bootstrap/app/app_options.dart';
+import 'package:netflex_bootstrap/exceptions/async.dart';
 import 'package:netflex_bootstrap/http/http.dart';
 import 'package:netflex_bootstrap/i18n/app_locale_cubit.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 export 'app_hooks.dart';
 export 'app_module.dart';
 
 typedef Wrapper = Widget Function(Widget child);
 typedef EntrypointBuilder = Widget Function();
+typedef SplashBuilder = Widget Function(BuildContext context);
 typedef AppClientBuilder = AppHttpClient Function();
 typedef LocaleCubitBuilder = BlocProvider<AppLocaleCubit> Function(
     AppOptionsProvider);
@@ -47,29 +48,50 @@ class App {
 
   Locale? _locale;
   List<Locale> _supportedLocales;
+  SplashBuilder? splashBuilder;
 
   App({
     Widget? child,
     AppHttpClient? apiClient,
     Locale? locale,
     List<Locale>? supportedLocales,
-  })  : _entrypoint = child != null ? (() => child) : null,
+    this.splashBuilder,
+  })
+      : _entrypoint = child != null ? (() => child) : null,
         _appClientBuilder = apiClient != null ? (() => apiClient) : null,
         _locale = locale,
         _supportedLocales =
             supportedLocales ?? (locale != null ? [locale] : []);
 
-  App.builder(this._entrypoint)
-      : _locale = null,
-        _supportedLocales = [];
+  App.builder(this._entrypoint, {
+    Locale? locale,
+    List<Locale> supportedLocales = const [],
+    AppClientBuilder? appClient,
+    this.splashBuilder,
+  })
+      : _locale = locale,
+        _appClientBuilder = appClient,
+        _supportedLocales = [
+          if (locale != null && !supportedLocales.contains(locale)) locale,
+          ...supportedLocales
+        ];
 
-  App.child(Widget child)
+  App.child(Widget child, {this.splashBuilder})
       : _locale = null,
         _supportedLocales = [] {
     _entrypoint = () => child;
   }
 
-  void setLocale(Locale? locale) => _locale = locale;
+  void setLocale(Locale? locale) {
+    _locale = locale;
+
+    if (locale != null && !_supportedLocales.contains(locale)) {
+      _supportedLocales.add(locale);
+    }
+  }
+
+  void setSplashBuilder(SplashBuilder splash) =>
+      splashBuilder = splash;
 
   void setSupportedLocales(List<Locale> supportedLocales) =>
       _supportedLocales = supportedLocales;
@@ -85,8 +107,10 @@ class App {
   void entrypointBuilder(EntrypointBuilder builder) => _entrypoint = builder;
 
   /// [provide] is a shorthand to create a [RepositoryProvider] for your application
-  void provide<T>(T value) => providers
-    ..add((child) => RepositoryProvider<T>.value(value: value, child: child));
+  void provide<T>(T value) =>
+      providers
+        ..add((child) =>
+        RepositoryProvider<T>.value(value: value, child: child));
 
   void add(AppMiddleware middleware) => _middlewares.add(middleware);
 
@@ -94,65 +118,102 @@ class App {
     module.install(this);
   }
 
-  void run() {
-    assert(_entrypoint != null && _appClientBuilder != null);
-    assert(_supportedLocales.isNotEmpty &&
-        (_locale == null || _supportedLocales.contains(_locale)));
+  Widget _buildFuture(BuildContext context, AsyncSnapshot<Widget> state) {
+    if (state.hasError) {
+      return Container(child: Text(state.error!.toString()));
+    }
 
+    if (state.hasData) {
+      return state.data!;
+    }
+
+    return splashBuilder != null ? splashBuilder!(context) : Container();
+  }
+
+  Future<Widget> get bootstrappedClient async {
     var appClient = _appClientBuilder!();
 
     appClient = _middlewares
         .whereType<LocaleIndependentAppClientMiddleware>()
         .wrap(appClient);
 
-    var child = <Widget Function(Widget)>[
+    var child = await <Future<Widget> Function(Widget)>[
+
       /// Wrap providers first
-      (child) => RepositoryProvider<AppHttpClient>.value(
-            value: appClient,
-            child: child,
-          ),
-      (child) => providers.wrap(child),
+          (child) async =>
+      RepositoryProvider<AppHttpClient>.value(
+        value: appClient,
+        child: child,
+      ),
+          (child) async => providers.wrap(child),
 
       /// Then wrap options if it exists
-      (child) => _optionsProvider != null
+          (child) async =>
+      _optionsProvider != null
           ? RepositoryProvider<AppOptionsProvider>.value(
-              value: _optionsProvider!,
-              child: child,
-            )
+        value: _optionsProvider!,
+        child: child,
+      )
           : child,
 
       /// Wrap all locale independent middlewares
-      (child) =>
+          (child) =>
           _middlewares.whereType<LocaleIndependentMiddleware>().wrap(child),
 
       /// Wrap locale dependent builder
-      (child) {
+          (child) async {
         var localeCubit = AppLocaleCubit(_locale, _supportedLocales);
         return BlocProvider.value(
           value: localeCubit,
           child: BlocBuilder<AppLocaleCubit, AppLocaleState>(
             bloc: localeCubit,
             builder: (context, state) {
-              return <Widget Function(Widget)>[
+              var future = <Future<Widget> Function(Widget)>[
+
                 /// Wrap in locale dependent middlewares
-                (child) => _middlewares
-                    .whereType<LocaleDependentMiddleware>()
-                    .wrap(child, state.locale),
+                    (child) async =>
+                    _middlewares
+                        .whereType<LocaleDependentMiddleware>()
+                        .wrap(child, state.locale),
 
                 /// Wrap and provide app http client
-                (child) => RepositoryProvider<AppHttpClient>.value(
-                      value: _middlewares
-                          .whereType<LocaleDependentAppClientMiddleware>()
-                          .wrap(appClient, state.locale),
-                      child: child,
-                    ),
-              ].fold(child, (child, wrap) => wrap(child));
+                    (child) async =>
+                RepositoryProvider<AppHttpClient>.value(
+                  value: _middlewares
+                      .whereType<LocaleDependentAppClientMiddleware>()
+                      .wrap(
+                      appClient.withMiddlewares(
+                          [LocaleSetter(state.locale)]),
+                      state.locale),
+                  child: child,
+                ),
+              ].foldAsync(child, (child, wrap) => wrap(child));
+
+              return FutureBuilder(
+                future: future,
+                builder: _buildFuture,
+              );
             },
           ),
         );
       }
-    ].reversed.fold(_entrypoint!(), (child, wrap) => wrap(child));
+    ].reversed.foldAsync(_entrypoint!(), (child, wrap) => wrap(child));
 
-    runApp(child);
+    return child;
+  }
+
+  void run() {
+    assert(_entrypoint != null && _appClientBuilder != null);
+    assert(
+    _supportedLocales.isNotEmpty &&
+        (_locale == null || _supportedLocales.contains(_locale)),
+    );
+
+    runApp(
+      FutureBuilder(
+        future: bootstrappedClient,
+        builder: _buildFuture,
+      ),
+    );
   }
 }
